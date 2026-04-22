@@ -24,10 +24,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Zýplama ve Yerçekimi")]
     public float jumpHeight = 1.5f;
-    public float gravity = -15f; // Düþüþ hissini toklaþtýrmak için yerçekimini biraz artýrdým
-
-    // YENÝ EKLENENLER: Zýplama Tamponu (Jump Buffer)
-    public float jumpBufferTime = 0.2f; // Space'e basýldýðýný ne kadar süre aklýnda tutsun
+    public float gravity = -15f;
+    public float jumpBufferTime = 0.2f;
     private float jumpBufferCounter;
 
     private Vector3 velocity;
@@ -64,27 +62,30 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.aKey.isPressed) horizontal -= 1f;
             if (Keyboard.current.dKey.isPressed) horizontal += 1f;
 
-            if (Keyboard.current.leftCtrlKey.isPressed) isCrouching = true;
-            else if (Keyboard.current.leftShiftKey.isPressed) isRunning = true;
+            // Sol Ctrl'ye BASILI TUTULDUÐU SÜRECE eðil
+            if (Keyboard.current.leftCtrlKey.isPressed)
+            {
+                isCrouching = true;
+            }
+            // Eðilmiyorsa ve Sol Shift'e basýlýyorsa koþ
+            else if (Keyboard.current.leftShiftKey.isPressed)
+            {
+                isRunning = true;
+            }
 
-            // YENÝ ZIPLAMA MANTIÐI: Space'e basýldýysa sayacý doldur
+            // Zýplama Tamponu
             if (Keyboard.current.spaceKey.wasPressedThisFrame)
-            {
                 jumpBufferCounter = jumpBufferTime;
-            }
             else
-            {
-                // Basýlmadýysa sayacý zamanla azalt
                 jumpBufferCounter -= Time.deltaTime;
-            }
         }
 
-        // 3. ZIPLAMA KONTROLÜ (Eðer hafýzada zýplama varsa ve yerdeysek zýpla)
+        // 3. Zýplama Kontrolü
         if (jumpBufferCounter > 0f && isGrounded && !isCrouching)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             animator.SetTrigger("jump");
-            jumpBufferCounter = 0f; // Zýpladýk, hafýzayý sýfýrla
+            jumpBufferCounter = 0f;
         }
 
         // 4. Kameraya Göre Hareket Yönü
@@ -95,11 +96,12 @@ public class PlayerController : MonoBehaviour
 
         Vector3 moveDirection = (camForward * vertical + camRight * horizontal).normalized;
 
-        // 5. Hýz ve Yatay Hareket
+        // 5. Hýz Seçimi
         float currentSpeed = walkSpeed;
         if (isCrouching) currentSpeed = crouchSpeed;
         else if (isRunning) currentSpeed = runSpeed;
 
+        // 6. Hareket ve Dönüþ
         if (moveDirection.magnitude >= 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
@@ -107,7 +109,7 @@ public class PlayerController : MonoBehaviour
             controller.Move(moveDirection * currentSpeed * Time.deltaTime);
         }
 
-        // 6. Eðilme Fiziði (Kapsül Küçültme)
+        // 7. Eðilme Fiziði (Collider Küçültme)
         if (isCrouching)
         {
             controller.height = Mathf.Lerp(controller.height, crouchHeight, Time.deltaTime * 10f);
@@ -119,13 +121,18 @@ public class PlayerController : MonoBehaviour
             controller.center = Vector3.Lerp(controller.center, normalCenter, Time.deltaTime * 10f);
         }
 
-        // 7. Yerçekimini Uygula (Dikey Hareket)
+        // 8. Yerçekimini Uygula
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
-        // 8. Animator Parametreleri
+        // 9. Animator Parametrelerini Gönder
         animator.SetBool("isCrouching", isCrouching);
-        float targetSpeedParam = (moveDirection.magnitude > 0.1f) ? (isRunning && !isCrouching ? 2f : 1f) : 0f;
+
+        float targetSpeedParam = 0f;
+        if (moveDirection.magnitude > 0.1f)
+        {
+            targetSpeedParam = (isRunning && !isCrouching) ? 2f : 1f;
+        }
         animator.SetFloat("speed", targetSpeedParam, 0.1f, Time.deltaTime);
     }
 }
