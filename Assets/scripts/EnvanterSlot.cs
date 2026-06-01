@@ -1,26 +1,41 @@
 using UnityEngine;
-using UnityEngine.UI; // Arayüz işlemleri için gerekli
+using UnityEngine.UI;
 
 public class EnvanterSlot : MonoBehaviour
 {
     [Header("UI Bileşenleri")]
-    public Image ikon; // Eşyanın resmini göstereceğimiz bileşen
+    public Image ikon;
 
     private EsyaVerisi icindekiEsya;
 
-    // Depodan gelen veriyi kutuya çizen fonksiyon
     public void SlotuDoldur(EsyaVerisi yeniEsya)
     {
         icindekiEsya = yeniEsya;
         ikon.sprite = icindekiEsya.esyaIkonu;
-        ikon.enabled = true; // İkonu görünür yap
+        ikon.enabled = true;
     }
 
-    // Kutuyu boşaltan fonksiyon
     public void SlotuTemizle()
     {
         icindekiEsya = null;
         ikon.sprite = null;
-        ikon.enabled = false; // İkonu gizle
+        ikon.enabled = false;
+    }
+
+    // YENİ EKLENDİ: Faremizle kutuya tıkladığımızda çalışacak kod
+    public void SlotaTiklandi()
+    {
+        if (icindekiEsya != null)
+        {
+            // Eğer tıklanan şey bir silahsa, Ekipman sistemine haber ver!
+            if (icindekiEsya.tur == EsyaTuru.Silah)
+            {
+                EkipmanSistemi.Instance.SilahKusan(icindekiEsya);
+            }
+            else
+            {
+                Debug.Log(icindekiEsya.esyaAdi + " kullanıldı!"); // İleride sağlık kiti için burayı yazacağız
+            }
+        }
     }
 }
