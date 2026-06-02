@@ -1,34 +1,78 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Çantada hem eşyanın kendisini hem de kaç adet olduğunu tutan akıllı yeni paket şablonu
+[System.Serializable]
+public class EnvanterEsyasi
+{
+    public EsyaVerisi veri;
+    public int adet;
+
+    public EnvanterEsyasi(EsyaVerisi yeniVeri, int ilkAdet)
+    {
+        veri = yeniVeri;
+        adet = ilkAdet;
+    }
+}
+
 public class EnvanterSistemi : MonoBehaviour
 {
-    // Singleton yapısı: Herhangi bir kod, "EnvanterSistemi.Instance..." yazarak buraya ulaşabilir.
     public static EnvanterSistemi Instance;
 
     [Header("Çanta Hafızası")]
-    public List<EsyaVerisi> cantadakiEsyalar = new List<EsyaVerisi>();
+    // Artık düz liste yerine adet bilgisini de taşıyan yeni listemizi kullanıyoruz
+    public List<EnvanterEsyasi> cantadakiEsyalar = new List<EnvanterEsyasi>();
 
-    // Çantaya bir şey eklendiğinde UI'a haber vermek için bir tetikleyici (Event) oluşturuyoruz
     public delegate void EnvanterDegisti();
     public event EnvanterDegisti OnEnvanterDegisti;
 
     void Awake()
     {
-        // Oyunda sadece 1 tane Envanter Sistemi olduğundan emin oluyoruz
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
-    // Yerdeki eşyayı aldığımızda PickupSystem bu fonksiyonu çağıracak
+    // Yerdeki eşya alındığında tetiklenen fonksiyon
     public void Ekle(EsyaVerisi yeniEsya)
     {
-        cantadakiEsyalar.Add(yeniEsya);
+        // Çantada bu eşyadan zaten var mı diye kontrol et
+        EnvanterEsyasi varOlan = cantadakiEsyalar.Find(x => x.veri == yeniEsya);
+
+        if (varOlan != null)
+        {
+            // Eğer varsa yeni slot açma, sadece adetini 1 artır! (İstifleme)
+            varOlan.adet++;
+        }
+        else
+        {
+            // Eğer çantada ilk defa görüyorsak listede yeni yuva aç ve adetini 1 yap
+            cantadakiEsyalar.Add(new EnvanterEsyasi(yeniEsya, 1));
+        }
         
-        // Çanta değişti! UI'a "Kendini güncelle" diye bağırıyoruz
         if (OnEnvanterDegisti != null)
         {
             OnEnvanterDegisti.Invoke();
+        }
+    }
+
+    // Sağlık kiti basıldığında çantadaki adeti azaltan yeni yardımcı fonksiyonumuz
+    public void EsyaAdetDus(EsyaVerisi esya)
+    {
+        EnvanterEsyasi varOlan = cantadakiEsyalar.Find(x => x.veri == esya);
+        if (varOlan != null)
+        {
+            varOlan.adet--;
+            
+            // Eğer adet sıfıra düştüyse çantadaki o slotu tamamen temizle
+            if (varOlan.adet <= 0)
+            {
+                cantadakiEsyalar.Remove(varOlan);
+            }
+            
+            if (OnEnvanterDegisti != null)
+            {
+                OnEnvanterDegisti.Invoke();
+            }
         }
     }
 }

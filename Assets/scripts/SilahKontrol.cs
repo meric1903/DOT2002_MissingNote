@@ -9,8 +9,8 @@ public class SilahKontrol : MonoBehaviour
     public float hasarMiktari = 25f; 
 
     [Header("Mermi ve Şarjör Ayarları")]
-    public int mermiKapasitesi = 10; // Bir şarjörün alacağı mermi
-    public int toplamMermi = 30;     // Cebimizdeki toplam YEDEK mermi (İstediğin gibi değiştirebilirsin)
+    public int mermiKapasitesi = 10; 
+    public int toplamMermi = 30;     
     public float reloadSuresi = 2f; 
     
     private int mevcutMermi;
@@ -31,15 +31,19 @@ public class SilahKontrol : MonoBehaviour
         IşınAyarlarınıYap();
     }
 
+    // 🎨 MERMİ İZİNİ İNCELTEN VE SARI YAPAN KISIM
     void IşınAyarlarınıYap()
     {
-        isinIzleyici.startWidth = 0.03f;
-        isinIzleyici.endWidth = 0.01f;
+        // 📏 Çizgiyi jilet gibi incelttik (Işın görüntüsü kayboldu)
+        isinIzleyici.startWidth = 0.02f;
+        isinIzleyici.endWidth = 0.005f; // Arkaya doğru süzülerek incelen kuyruk
         isinIzleyici.positionCount = 2;
         isinIzleyici.enabled = false;
         isinIzleyici.material = new Material(Shader.Find("Sprites/Default"));
-        isinIzleyici.startColor = new Color(1f, 0.5f, 0f, 1f); 
-        isinIzleyici.endColor = new Color(1f, 0.2f, 0f, 0f);
+        
+        // 🔥 FİLMLERDEKİ SARI-TURUNCU PARLAMA RENKLERİ:
+        isinIzleyici.startColor = new Color(1f, 0.85f, 0.2f, 1f); // Namludan çıkan parlak sarı/altın
+        isinIzleyici.endColor = new Color(1f, 0.4f, 0f, 0f);      // Havada şeffaflaşıp kaybolan turuncu kuyruk
     }
 
     void Update()
@@ -57,12 +61,10 @@ public class SilahKontrol : MonoBehaviour
             }
             else
             {
-                // Şarjör boşsa ve yedek mermimiz varsa otomatik doldur
                 if (toplamMermi > 0) StartCoroutine(SarjorDegistirSenaryosu());
             }
         }
 
-        // R tuşuna basınca ve şarjör tam dolu değilken, cepte de mermi varsa reload yap
         if (Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame && mevcutMermi < mermiKapasitesi && toplamMermi > 0)
         {
             StartCoroutine(SarjorDegistirSenaryosu());
@@ -85,33 +87,33 @@ public class SilahKontrol : MonoBehaviour
         else StartCoroutine(MermiIsiniFlashi(transform.position, isinBitisNoktasi));
     }
 
+    // ⚡ LAZER GÖRÜNTÜSÜNÜ SALİSELİK ÇAKMAYA ÇEVİREN ZAMANLAYICI
     IEnumerator MermiIsiniFlashi(Vector3 baslangic, Vector3 bitis)
     {
         isinIzleyici.SetPosition(0, baslangic);
         isinIzleyici.SetPosition(1, bitis);
         isinIzleyici.enabled = true;
-        yield return new WaitForSeconds(0.04f);
+        
+        // ⏱️ Süreyi 0.04'ten 0.02'ye çektik! Çizgi artık ekranda kalmıyor, mermi gibi anlık çakıp sönüyor
+        yield return new WaitForSeconds(0.02f); 
+        
         isinIzleyici.enabled = false;
     }
 
-    // --- AKILLI RELOAD MATEMATİĞİ ---
     IEnumerator SarjorDegistirSenaryosu()
     {
         sarjorDegisiyor = true;
         yield return new WaitForSeconds(reloadSuresi);
 
-        // Şarjörü fullemek için kaç tane mermiye ihtiyacımız var?
         int gerekenMermi = mermiKapasitesi - mevcutMermi;
 
         if (toplamMermi >= gerekenMermi)
         {
-            // Eğer cepte yeterince mermi varsa şarjörü fulle, cepten harcananı düş
             mevcutMermi = mermiKapasitesi;
             toplamMermi -= gerekenMermi;
         }
         else
         {
-            // Eğer cepte gereken kadar mermi yoksa, cepte kalan son mermileri şarjöre ekle ve cebi sıfırla
             mevcutMermi += toplamMermi;
             toplamMermi = 0;
         }
@@ -120,5 +122,5 @@ public class SilahKontrol : MonoBehaviour
     }
 
     public int GetMevcutMermi() { return mevcutMermi; }
-    public int GetToplamMermi() { return toplamMermi; } // UI için yedek mermiyi veren yeni köprü
+    public int GetToplamMermi() { return toplamMermi; } 
 }
