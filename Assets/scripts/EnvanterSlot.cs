@@ -3,39 +3,84 @@ using UnityEngine.UI;
 
 public class EnvanterSlot : MonoBehaviour
 {
-    [Header("UI Bileşenleri")]
-    public Image ikon;
+    [Header("Eşya Verisi")]
+    public EsyaVerisi secilenEsya; // Orijinal 'secilenEsya' verisi
 
-    private EsyaVerisi icindekiEsya;
+    // Görselin butonun arkasında kalmasını engelleyen yardımcı tarayıcı
+    private Image EnDogruIkonResminiBul()
+    {
+        Image[] resimler = GetComponentsInChildren<Image>(true);
+        foreach (Image img in resimler)
+        {
+            if (img.gameObject != this.gameObject)
+            {
+                return img;
+            }
+        }
+        return GetComponent<Image>();
+    }
 
+    // EnvanterUI.cs kodunun çağırdığı ve arayüzü dolduran fonksiyon
     public void SlotuDoldur(EsyaVerisi yeniEsya)
     {
-        icindekiEsya = yeniEsya;
-        ikon.sprite = icindekiEsya.esyaIkonu;
-        ikon.enabled = true;
+        secilenEsya = yeniEsya;
+        Image ikon = EnDogruIkonResminiBul();
+
+        if (ikon != null && secilenEsya != null)
+        {
+            ikon.sprite = secilenEsya.esyaIkonu; // Orijinal 'esyaIkonu'
+            ikon.type = Image.Type.Simple;
+            ikon.preserveAspect = true; 
+            ikon.enabled = true;
+            ikon.color = Color.white; 
+
+            // Tıklamanın arkadaki butona tık diye geçmesini sağlar
+            ikon.raycastTarget = false; 
+        }
     }
 
+    // EnvanterUI.cs kodunun çağırdığı ve slotu temizleyen fonksiyon
     public void SlotuTemizle()
     {
-        icindekiEsya = null;
-        ikon.sprite = null;
-        ikon.enabled = false;
-    }
+        secilenEsya = null;
+        Image ikon = EnDogruIkonResminiBul();
 
-    // YENİ EKLENDİ: Faremizle kutuya tıkladığımızda çalışacak kod
-    public void SlotaTiklandi()
-    {
-        if (icindekiEsya != null)
+        if (ikon != null)
         {
-            // Eğer tıklanan şey bir silahsa, Ekipman sistemine haber ver!
-            if (icindekiEsya.tur == EsyaTuru.Silah)
+            ikon.sprite = null;
+            
+            if (ikon.gameObject != this.gameObject)
             {
-                EkipmanSistemi.Instance.SilahKusan(icindekiEsya);
+                ikon.enabled = false;
             }
             else
             {
-                Debug.Log(icindekiEsya.esyaAdi + " kullanıldı!"); // İleride sağlık kiti için burayı yazacağız
+                ikon.type = Image.Type.Simple;
+                ikon.color = Color.white;
             }
+        }
+    }
+
+    /// <summary>
+    /// İSTEDİĞİN ESKİ HALİ: Çantada slota tıklandığında çalışan orijinal fonksiyon
+    /// </summary>
+    public void SlotaTiklandi()
+    {
+        if (secilenEsya == null) return;
+
+        // EsyaVerisi.cs içindeki 'tur' ve 'EsyaTuru.Silah' kontrolü
+        if (secilenEsya.tur == EsyaTuru.Silah) 
+        {
+            if (EkipmanSistemi.Instance != null)
+            {
+                // EsyaVerisi.cs içindeki orijinal 'esyaPrefab'
+                EkipmanSistemi.Instance.SilahKusan(secilenEsya.esyaPrefab);
+            }
+        }
+        // EsyaVerisi.cs içindeki 'EsyaTuru.Tuketilebilir' kontrolü
+        else if (secilenEsya.tur == EsyaTuru.Tuketilebilir)
+        {
+            Debug.Log("Tüketilebilir eşya kullanıldı: " + secilenEsya.esyaAdi);
         }
     }
 }
