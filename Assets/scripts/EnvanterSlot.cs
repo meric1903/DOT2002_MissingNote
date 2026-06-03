@@ -1,13 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Sayı yazısını kontrol etmek için gerekli kütüphane
+using TMPro; 
 
 public class EnvanterSlot : MonoBehaviour
 {
     [Header("Eşya Verisi")]
     public EsyaVerisi secilenEsya; 
 
-    // Görselin butonun arkasında kalmasını engelleyen orijinal tarayıcın
     private Image EnDogruIkonResminiBul()
     {
         Image[] resimler = GetComponentsInChildren<Image>(true);
@@ -18,20 +17,17 @@ public class EnvanterSlot : MonoBehaviour
         return GetComponent<Image>();
     }
 
-    // Slotun sağ altına ekleyeceğimiz sayı metnini otomatik bulan yeni yardımcı fonksiyon
     private TMP_Text EnDogruAdetYazisiniBul()
     {
         return GetComponentInChildren<TMP_Text>(true);
     }
 
-    // Yeni adet sistemine göre revize edilen doldurma fonksiyonu
     public void SlotuDoldur(EnvanterEsyasi cantaEsyasi)
     {
         secilenEsya = cantaEsyasi.veri;
         Image ikon = EnDogruIkonResminiBul();
         TMP_Text adetYazisi = EnDogruAdetYazisiniBul();
 
-        // 1. İKON AYARI
         if (ikon != null && secilenEsya != null)
         {
             ikon.sprite = secilenEsya.esyaIkonu; 
@@ -42,10 +38,8 @@ public class EnvanterSlot : MonoBehaviour
             ikon.raycastTarget = false; 
         }
 
-        // 2. ADET SAYISI AYARI
         if (adetYazisi != null)
         {
-            // Eğer eşya adeti 1'den büyükse sağ altta adeti göster
             if (cantaEsyasi.adet > 1)
             {
                 adetYazisi.text = cantaEsyasi.adet.ToString();
@@ -53,7 +47,6 @@ public class EnvanterSlot : MonoBehaviour
             }
             else
             {
-                // 1 taneyse sayı kalabalığı yapmasın diye gizle
                 adetYazisi.enabled = false;
             }
         }
@@ -74,11 +67,10 @@ public class EnvanterSlot : MonoBehaviour
 
         if (adetYazisi != null)
         {
-            adetYazisi.enabled = false; // Temizlenince sayıyı da kapat
+            adetYazisi.enabled = false; 
         }
     }
 
-    // Orijinal 'SlotaTiklandi' buton fonksiyonun
     public void SlotaTiklandi()
     {
         if (secilenEsya == null) return;
@@ -91,23 +83,46 @@ public class EnvanterSlot : MonoBehaviour
                 EkipmanSistemi.Instance.SilahKusan(secilenEsya.esyaPrefab);
             }
         }
-        // 2. DURUM: TÜKETİLEBİLİR (SAĞLIK ÇANTASI) İSE
+        // 2. DURUM: TÜKETİLEBİLİR İSE (Mermi Kutusu veya Sağlık Çantası)
         else if (secilenEsya.tur == EsyaTuru.Tuketilebilir)
         {
-            if (CanSistemi.Instance != null)
+            // EĞER TIKLANAN EŞYA MERMİ KUTUSUYSA:
+            if (secilenEsya.esyaAdi == "Mermi Kutusu")
             {
-                // Can barımız maksimum değerden az ise (Yani cana ihtiyaç varsa)
-                if (CanSistemi.Instance.CanIhtiyaciVarMi())
+                GameObject silahTutucu = GameObject.Find("silahtutucu"); 
+                
+                if (silahTutucu != null && silahTutucu.transform.childCount > 0)
                 {
-                    // Can barına 25 birim can ekle
-                    CanSistemi.Instance.CanEkle(25f);
+                    SilahKontrol aktifSilah = silahTutucu.transform.GetChild(0).GetComponent<SilahKontrol>();
                     
-                    // Sağlık çantasını tükettiğimiz için adetini 1 düşür
-                    EnvanterSistemi.Instance.EsyaAdetDus(secilenEsya);
+                    if (aktifSilah != null)
+                    {
+                        int verilecekMermi = 10; // Kutudan çıkacak mermi sayısı
+                        
+                        aktifSilah.toplamMermi += verilecekMermi;
+                        SilahKontrol.hafizaToplamMermi += verilecekMermi; 
+                        
+                        Debug.Log("<color=green>Şarjöre " + verilecekMermi + " mermi eklendi!</color>");
+                        
+                        // Mermiyi çantadan düş
+                        EnvanterSistemi.Instance.EsyaAdetDus(secilenEsya);
+                    }
                 }
-                else
+            }
+            // EĞER TIKLANAN EŞYA SAĞLIK ÇANTASIYSA:
+            else 
+            {
+                if (CanSistemi.Instance != null)
                 {
-                    Debug.Log("Canın zaten tamamen dolu, sağlık çantasını harcayamazsın!");
+                    if (CanSistemi.Instance.CanIhtiyaciVarMi())
+                    {
+                        CanSistemi.Instance.CanEkle(25f);
+                        EnvanterSistemi.Instance.EsyaAdetDus(secilenEsya);
+                    }
+                    else
+                    {
+                        Debug.Log("Canın zaten tamamen dolu, sağlık çantasını harcayamazsın!");
+                    }
                 }
             }
         }

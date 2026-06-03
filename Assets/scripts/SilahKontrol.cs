@@ -13,22 +13,48 @@ public class SilahKontrol : MonoBehaviour
     public int toplamMermi = 30;     
     public float reloadSuresi = 2f; 
     
-    private int mevcutMermi;
+    public int mevcutMermi; // Private'ı Public yaptık ki dışarıdan görünsün
     private bool sarjorDegisiyor = false; 
 
     private LineRenderer isinIzleyici;
     private Transform namluUcu;
     private Camera oyuncuKamerasi; 
 
+    // --- YENİ EKLENEN KALICI HAFIZA ---
+    // Static olduğu için silah yok olsa da bu hafıza asla silinmez!
+    public static int hafizaMevcutMermi = -1;
+    public static int hafizaToplamMermi = -1;
+
     void Start()
     {
-        mevcutMermi = mermiKapasitesi;
         oyuncuKamerasi = Camera.main; 
         namluUcu = transform.Find("Barrel_Location");
 
         isinIzleyici = GetComponent<LineRenderer>();
         if (isinIzleyici == null) isinIzleyici = gameObject.AddComponent<LineRenderer>();
         IşınAyarlarınıYap();
+
+        // SİLAH ELİMİZE GELDİĞİNDE HAFIZAYI KONTROL EDİYORUZ
+        if (hafizaMevcutMermi == -1) 
+        {
+            // Eğer oyun yeni başladıysa (hafıza boşsa) kapasiteyi doldur
+            mevcutMermi = mermiKapasitesi; 
+            hafizaMevcutMermi = mevcutMermi;
+        } 
+        else 
+        {
+            // Daha önce ateş edildiyse, hafızadaki mermiyi silaha yükle!
+            mevcutMermi = hafizaMevcutMermi; 
+        }
+
+        if (hafizaToplamMermi == -1)
+        {
+            hafizaToplamMermi = toplamMermi;
+        }
+        else 
+        {
+            toplamMermi = hafizaToplamMermi; 
+        }
     }
 
     void IşınAyarlarınıYap()
@@ -45,6 +71,10 @@ public class SilahKontrol : MonoBehaviour
 
     void Update()
     {
+        // MERMİ SAYISINI HER SANİYE HAFIZAYA KAYDET
+        hafizaMevcutMermi = mevcutMermi;
+        hafizaToplamMermi = toplamMermi;
+
         if (Time.timeScale == 0f) return; 
         if (transform.parent == null) return; 
         if (NisanKontrol.Instance != null && NisanKontrol.Instance.sinematikOynuyor) return; 
@@ -79,21 +109,17 @@ public class SilahKontrol : MonoBehaviour
         {
             isinBitisNoktasi = hit.point;
 
-            // ----- AYIYA VE DÜŞMANLARA HASAR VERME KISMI -----
             DushmanCanSistemi vurulanDushman = hit.collider.GetComponent<DushmanCanSistemi>();
             
-            // Çarpışma kutusu (Collider) alt objede, can sistemi üst objede (Parent) ise diye kontrol:
             if (vurulanDushman == null)
             {
                 vurulanDushman = hit.collider.GetComponentInParent<DushmanCanSistemi>();
             }
             
-            // Eğer Can sistemini bulduysak merminin hasarını yolla!
             if (vurulanDushman != null)
             {
                 vurulanDushman.HasarAl(hasarMiktari);
             }
-            // -------------------------------------------------
         }
 
         if (namluUcu != null) StartCoroutine(MermiIsiniFlashi(namluUcu.position, isinBitisNoktasi));
