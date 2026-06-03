@@ -15,7 +15,6 @@ public class OynanisKameraGecisi : MonoBehaviour
     private CameraFollow eskiTakipKodu; 
     private float asagiYukariBakis = 0f; 
 
-    // YENİ EKLENDİ: Oyuncunun yürüme kodunu hafızaya alacağız
     private PlayerController yürümeKodu;
 
     void Start()
@@ -23,7 +22,6 @@ public class OynanisKameraGecisi : MonoBehaviour
         orijinalParent = transform.parent;
         eskiTakipKodu = GetComponent<CameraFollow>(); 
 
-        // Eğer oyuncu gövdesini atadıysan, içindeki PlayerController'ı otomatik bulur
         if (oyuncuGovdesi != null)
         {
             yürümeKodu = oyuncuGovdesi.GetComponent<PlayerController>();
@@ -32,6 +30,9 @@ public class OynanisKameraGecisi : MonoBehaviour
 
     void Update()
     {
+        // Çanta menüsü açıkken (zaman durmuşsa) kameranın fareyi dinlemesini engelliyoruz
+        if (Time.timeScale == 0f) return;
+
         if (Mouse.current != null)
         {
             float scrollY = Mouse.current.scroll.ReadValue().y;
@@ -65,7 +66,6 @@ public class OynanisKameraGecisi : MonoBehaviour
         ilkSahisMi = true;
         if (eskiTakipKodu != null) eskiTakipKodu.enabled = false;
         
-        // YENİ EKLENDİ: Yürüme koduna FPS modunda olduğumuzu haber ver
         if (yürümeKodu != null) yürümeKodu.fpsModundaMi = true;
 
         if (fpsGozNoktasi != null)
@@ -83,7 +83,6 @@ public class OynanisKameraGecisi : MonoBehaviour
         transform.SetParent(orijinalParent);
         if (eskiTakipKodu != null) eskiTakipKodu.enabled = true;
         
-        // YENİ EKLENDİ: Yürüme koduna TPS moduna döndüğümüzü haber ver
         if (yürümeKodu != null) yürümeKodu.fpsModundaMi = false;
     }
 }

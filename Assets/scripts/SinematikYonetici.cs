@@ -1,54 +1,51 @@
 using UnityEngine;
 using System.Collections;
-using Unity.Cinemachine; // Arkadaþýnýn kameralarý için gerekli
+using Unity.Cinemachine; 
 
 public class SinematikYonetici : MonoBehaviour
 {
-    [Header("Zaman Ayarý")]
+    [Header("Zaman AyarÄ±")]
     public float sinematikSuresi = 15f;
 
     [Header("Objeler")]
-    public GameObject anaKarakter; // Senin oynadýðýn karakter
-    public GameObject sinematikSistemi; // Ýçinde arkadaþýnýn kameralarý olan grup
+    public GameObject anaKarakter; 
+    public GameObject sinematikSistemi; 
 
     void Start()
     {
-        // Oyun baþlar baþlamaz senaryoyu baþlat
         StartCoroutine(SinematikSenaryosu());
     }
 
     IEnumerator SinematikSenaryosu()
     {
-        // --- 1. AÞAMA: SÝNEMATÝK BAÞLIYOR ---
+        // --- 1. AÅžAMA: SÄ°NEMATÄ°K BAÅžLIYOR ---
 
-        // Kendi karakterini tamamen gizle (Görünmez olur ve tuþlar/hareket iptal olur)
+        // YENÄ° EKLENDÄ°: Sinematik baÅŸladÄ±ÄŸÄ±nÄ± Aim sistemine haber ver (NiÅŸangah gizlenir)
+        if (NisanKontrol.Instance != null) NisanKontrol.Instance.sinematikOynuyor = true;
+
         if (anaKarakter != null) anaKarakter.SetActive(false);
 
-        // Ana kameradaki kendi özel kodunu (CameraFollow) kapat ki Cinemachine ile çakýþmasýn
         CameraFollow ozelKameram = Camera.main.GetComponent<CameraFollow>();
         if (ozelKameram != null) ozelKameram.enabled = false;
 
 
-        // --- 2. AÞAMA: BEKLEME ---
-
-        // Belirlediðin süre kadar (15 saniye) hiçbir þey yapmadan bekle (Sinematik oynuyor)
+        // --- 2. AÅžAMA: BEKLEME ---
         yield return new WaitForSeconds(sinematikSuresi);
 
 
-        // --- 3. AÞAMA: SÝNEMATÝK BÝTTÝ, OYUN BAÞLIYOR ---
+        // --- 3. AÅžAMA: SÄ°NEMATÄ°K BÄ°TTÄ°, OYUN BAÅžLIYOR ---
 
-        // Arkadaþýnýn sinematik sistemini (kameralarý) tamamen kapat
         if (sinematikSistemi != null) sinematikSistemi.SetActive(false);
 
-        // Ana kameranýn beynini (Cinemachine Brain) kapat ki kamera serbest kalsýn
         CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
         if (brain != null) brain.enabled = false;
 
-        // Kendi karakterini görünür yap ve mekanikleri geri aç
         if (anaKarakter != null) anaKarakter.SetActive(true);
 
-        // Ana kameradaki kendi özel kodunu tekrar aktif et ki kameran çalýþsýn
         if (ozelKameram != null) ozelKameram.enabled = true;
+
+        // YENÄ° EKLENDÄ°: Sinematik bittiÄŸini Aim sistemine haber ver (NiÅŸangah geri gelir)
+        if (NisanKontrol.Instance != null) NisanKontrol.Instance.sinematikOynuyor = false;
 
         Debug.Log("Sinematik bitti, kontrol sende!");
     }
