@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Sahne değişimi için şart
+using UnityEngine.SceneManagement; 
 
 public class CanSistemi : MonoBehaviour
 {
@@ -9,7 +9,7 @@ public class CanSistemi : MonoBehaviour
     public float maksimumCan = 100f;
     private float mevcutCan;
 
-    [Header("Ölüm Ekranı (Baran Tasarlayınca Buraya Sürükle)")]
+    [Header("Ölüm Ekranı")]
     public GameObject oyunBittiPaneli; 
 
     private void Awake()
@@ -20,9 +20,12 @@ public class CanSistemi : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         mevcutCan = maksimumCan;
         
-        // Oyun başında panelin kapalı olduğundan emin olalım
         if (oyunBittiPaneli != null) oyunBittiPaneli.SetActive(false);
     }
 
@@ -49,27 +52,21 @@ public class CanSistemi : MonoBehaviour
 
     private void KarakterOldu()
     {
-        Debug.Log("KARAKTER ÖLDÜ! Oyun donduruluyor.");
-
-        // 1. Oyunu dondur
         Time.timeScale = 0f;
 
-        // 2. Baran'ın panelini aktif et
         if (oyunBittiPaneli != null)
         {
             oyunBittiPaneli.SetActive(true);
         }
 
-        // 3. Farenin kilitlenmesini kaldır (Butonlara tıklayabilmen için)
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-    // Butona basınca çalışacak fonksiyon
     public void OyunuYenidenBaslat()
     {
-        Time.timeScale = 1f; // Zamanı geri başlat
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // Mevcut sahneyi yeniden yükle
+        Time.timeScale = 1f; 
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); 
     }
 
     public float GetMevcutCan() { return mevcutCan; }
