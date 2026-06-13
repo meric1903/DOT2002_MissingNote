@@ -1,13 +1,16 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // Sahne değişimi için şart
 
 public class CanSistemi : MonoBehaviour
 {
-    // Hayvanların ve sağlık çantalarının bu koda dışarıdan kolayca ulaşabilmesi için Singleton
     public static CanSistemi Instance;
 
     [Header("Can Ayarları")]
     public float maksimumCan = 100f;
     private float mevcutCan;
+
+    [Header("Ölüm Ekranı (Baran Tasarlayınca Buraya Sürükle)")]
+    public GameObject oyunBittiPaneli; 
 
     private void Awake()
     {
@@ -17,22 +20,19 @@ public class CanSistemi : MonoBehaviour
 
     void Start()
     {
-        // Oyun başladığında canı fulle
         mevcutCan = maksimumCan;
+        
+        // Oyun başında panelin kapalı olduğundan emin olalım
+        if (oyunBittiPaneli != null) oyunBittiPaneli.SetActive(false);
     }
 
-    /// <summary>
-    /// Vahşi hayvanlar (Ayı, Kurt) bize saldırdığında bu fonksiyonu çağıracak
-    /// </summary>
-    /// <param name="hasarMiktari">Hayvanın vuruş gücü</param>
     public void HasarAl(float hasarMiktari)
     {
-        if (mevcutCan <= 0) return; // Karakter zaten öldüyse çalışma
+        if (mevcutCan <= 0) return; 
 
         mevcutCan -= hasarMiktari;
         Debug.Log("Karakter Hasar Aldı! Kalan Can: " + mevcutCan);
 
-        // Can sıfırın altına düşerse ölme fonksiyonunu tetikle
         if (mevcutCan <= 0)
         {
             mevcutCan = 0;
@@ -40,31 +40,38 @@ public class CanSistemi : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Sağlık çantası kullanıldığında canı yenileyen fonksiyon
-    /// </summary>
     public void CanEkle(float iyilestirmeMiktari)
     {
-        if (mevcutCan <= 0) return; // Ölüye can basılamaz
-
+        if (mevcutCan <= 0) return; 
         mevcutCan += iyilestirmeMiktari;
-        
-        // Canın maksimum sınırı aşmasını engelle
-        if (mevcutCan > maksimumCan)
-        {
-            mevcutCan = maksimumCan;
-        }
-
-        Debug.Log("Can Yenilendi! Mevcut Can: " + mevcutCan);
+        if (mevcutCan > maksimumCan) mevcutCan = maksimumCan;
     }
 
     private void KarakterOldu()
     {
-        Debug.LogError("KARAKTER ÖLDÜ! Oyun bitti ekranı buraya bağlanacak.");
-        // İleride buraya ölüm animasyonu veya "Yeniden Başla" paneli ekleyeceğiz
+        Debug.Log("KARAKTER ÖLDÜ! Oyun donduruluyor.");
+
+        // 1. Oyunu dondur
+        Time.timeScale = 0f;
+
+        // 2. Baran'ın panelini aktif et
+        if (oyunBittiPaneli != null)
+        {
+            oyunBittiPaneli.SetActive(true);
+        }
+
+        // 3. Farenin kilitlenmesini kaldır (Butonlara tıklayabilmen için)
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
-    // Arayüzün (UI) can barını doldurabilmesi için gerekli köprü fonksiyonlar
+    // Butona basınca çalışacak fonksiyon
+    public void OyunuYenidenBaslat()
+    {
+        Time.timeScale = 1f; // Zamanı geri başlat
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name); // Mevcut sahneyi yeniden yükle
+    }
+
     public float GetMevcutCan() { return mevcutCan; }
     public float GetMaksimumCan() { return maksimumCan; }
     public bool CanIhtiyaciVarMi() { return mevcutCan < maksimumCan; }

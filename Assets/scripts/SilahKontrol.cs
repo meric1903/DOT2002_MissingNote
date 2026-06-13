@@ -13,15 +13,13 @@ public class SilahKontrol : MonoBehaviour
     public int toplamMermi = 30;     
     public float reloadSuresi = 2f; 
     
-    public int mevcutMermi; // Private'ı Public yaptık ki dışarıdan görünsün
+    public int mevcutMermi; 
     private bool sarjorDegisiyor = false; 
 
     private LineRenderer isinIzleyici;
     private Transform namluUcu;
     private Camera oyuncuKamerasi; 
 
-    // --- YENİ EKLENEN KALICI HAFIZA ---
-    // Static olduğu için silah yok olsa da bu hafıza asla silinmez!
     public static int hafizaMevcutMermi = -1;
     public static int hafizaToplamMermi = -1;
 
@@ -34,16 +32,13 @@ public class SilahKontrol : MonoBehaviour
         if (isinIzleyici == null) isinIzleyici = gameObject.AddComponent<LineRenderer>();
         IşınAyarlarınıYap();
 
-        // SİLAH ELİMİZE GELDİĞİNDE HAFIZAYI KONTROL EDİYORUZ
         if (hafizaMevcutMermi == -1) 
         {
-            // Eğer oyun yeni başladıysa (hafıza boşsa) kapasiteyi doldur
             mevcutMermi = mermiKapasitesi; 
             hafizaMevcutMermi = mevcutMermi;
         } 
         else 
         {
-            // Daha önce ateş edildiyse, hafızadaki mermiyi silaha yükle!
             mevcutMermi = hafizaMevcutMermi; 
         }
 
@@ -71,14 +66,15 @@ public class SilahKontrol : MonoBehaviour
 
     void Update()
     {
-        // MERMİ SAYISINI HER SANİYE HAFIZAYA KAYDET
-        hafizaMevcutMermi = mevcutMermi;
-        hafizaToplamMermi = toplamMermi;
+        // KESİN ÇÖZÜM: Silah "silahtutucu" isimli yuvada değilse (yani yerdeyse), Update çalışmaz ve ateş edemez!
+        if (transform.parent == null || transform.parent.name != "silahtutucu") return; 
 
         if (Time.timeScale == 0f) return; 
-        if (transform.parent == null) return; 
         if (NisanKontrol.Instance != null && NisanKontrol.Instance.sinematikOynuyor) return; 
         if (sarjorDegisiyor) return;
+
+        hafizaMevcutMermi = mevcutMermi;
+        hafizaToplamMermi = toplamMermi;
 
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
