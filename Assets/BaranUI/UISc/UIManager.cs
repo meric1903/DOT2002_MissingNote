@@ -64,6 +64,7 @@ public class UIManager : MonoBehaviour
     public void InGame()
     {
         SceneManager.LoadScene(0);
+        Time.timeScale = 1;
     }
 
     public void ExitGame()
