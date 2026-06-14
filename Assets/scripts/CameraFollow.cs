@@ -3,56 +3,84 @@ using UnityEngine.InputSystem; // Yeni Input sistemi
 
 public class CameraFollow : MonoBehaviour
 {
-    [Header("Takip Ayarlarý")]
+    [Header("Takip Ayarlarï¿½")]
     public Transform target; // Karakterin
-    public float distance = 6f; // Kameranýn karaktere uzaklýðý
-    public float heightOffset = 1.5f; // Kameranýn hedefin neresine (boyun/kafa) bakacaðý
+    public float heightOffset = 1.5f; // Kameranï¿½n hedefin neresine (boyun/kafa) bakacaï¿½ï¿½
+
+    [Header("Mesafe Ayarlarï¿½ (ï¿½ï¿½/Dï¿½ï¿½ Mekan)")]
+    public float outdoorDistance = 6f; // Dï¿½ï¿½arï¿½dayken kameranï¿½n uzaklï¿½ï¿½ï¿½ (Eski distance)
+    public float indoorDistance = 2f;  // Evin iï¿½indeyken kameranï¿½n uzaklï¿½ï¿½ï¿½
+    public float zoomSpeed = 5f;       // ï¿½ï¿½eri/Dï¿½ï¿½arï¿½ geï¿½erken yakï¿½nlaï¿½ma hï¿½zï¿½
 
     [Header("Fare Hassasiyeti")]
-    public float sensitivityX = 0.3f; // Saða sola dönme hýzý
-    public float sensitivityY = 0.2f; // Aþaðý yukarý dönme hýzý
+    public float sensitivityX = 0.3f; // Saï¿½a sola dï¿½nme hï¿½zï¿½
+    public float sensitivityY = 0.2f; // Aï¿½aï¿½ï¿½ yukarï¿½ dï¿½nme hï¿½zï¿½
 
-    [Header("Açý Sýnýrlarý")]
-    public float yMinLimit = -20f; // Kamera en fazla ne kadar aþaðý inebilir
-    public float yMaxLimit = 60f;  // Kamera en fazla ne kadar yukarý çýkabilir
+    [Header("Aï¿½ï¿½ Sï¿½nï¿½rlarï¿½")]
+    public float yMinLimit = -20f; // Kamera en fazla ne kadar aï¿½aï¿½ï¿½ inebilir
+    public float yMaxLimit = 60f;  // Kamera en fazla ne kadar yukarï¿½ ï¿½ï¿½kabilir
 
     private float currentX = 0f;
     private float currentY = 0f;
 
+    // Zoom geï¿½iï¿½i iï¿½in oluï¿½turduï¿½umuz yeni deï¿½iï¿½kenler
+    private float currentDistance;
+    private float targetDistance;
+
     void Start()
     {
-        // Oyuna baþladýðýmýzda fare imlecini ekrana kilitle ve gizle (Etrafý rahatça izlemek için)
+        // Oyuna baï¿½ladï¿½ï¿½ï¿½mï¿½zda fare imlecini ekrana kilitle ve gizle (Etrafï¿½ rahatï¿½a izlemek iï¿½in)
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Baþlangýçta kameranýn mevcut açýsýný al
+        // Baï¿½langï¿½ï¿½ta kameranï¿½n mevcut aï¿½ï¿½sï¿½nï¿½ al
         Vector3 angles = transform.eulerAngles;
         currentX = angles.y;
         currentY = angles.x;
+
+        // Baï¿½langï¿½ï¿½ta oyun dï¿½ï¿½arï¿½da baï¿½lï¿½yorsa mesafeyi outdoor (dï¿½ï¿½ mekan) olarak ayarla
+        currentDistance = outdoorDistance;
+        targetDistance = outdoorDistance;
+    }
+
+    // Bu fonksiyonu evin iï¿½indeki gï¿½rï¿½nmez kutu (Trigger) ï¿½alï¿½ï¿½tï¿½racak
+    public void SetIndoorMode(bool isIndoor)
+    {
+        if (isIndoor)
+        {
+            targetDistance = indoorDistance; // ï¿½ï¿½eri girdiysek hedef mesafeyi kï¿½salt
+        }
+        else
+        {
+            targetDistance = outdoorDistance; // Dï¿½ï¿½arï¿½ ï¿½ï¿½ktï¿½ysak hedef mesafeyi uzat
+        }
     }
 
     void LateUpdate()
     {
         if (target == null) return;
-
+        if (Time.timeScale == 0f) return;
         // 1. Fareden gelen hareketi oku
         if (Mouse.current != null)
         {
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
 
-            // Farenin X ve Y hareketini açýlara ekle
+            // Farenin X ve Y hareketini aï¿½ï¿½lara ekle
             currentX += mouseDelta.x * sensitivityX;
-            currentY -= mouseDelta.y * sensitivityY; // Y ekseni genelde ters çevrilir (- kullanýrýz)
+            currentY -= mouseDelta.y * sensitivityY; // Y ekseni genelde ters ï¿½evrilir (- kullanï¿½rï¿½z)
         }
 
-        // 2. Y eksenini sýnýrla (Kameranýn karakterin altýndan geçmesini veya tepede takla atmasýný engeller)
+        // 2. Y eksenini sï¿½nï¿½rla (Kameranï¿½n karakterin altï¿½ndan geï¿½mesini veya tepede takla atmasï¿½nï¿½ engeller)
         currentY = Mathf.Clamp(currentY, yMinLimit, yMaxLimit);
 
-        // 3. Fareden aldýðýmýz X ve Y açýlarýný bir rotasyona çevir
+        // YENï¿½ EKLENEN KISIM: Kameranï¿½n o anki mesafesini, hedef mesafeye doï¿½ru yumuï¿½akï¿½a yaklaï¿½tï¿½r
+        currentDistance = Mathf.Lerp(currentDistance, targetDistance, Time.deltaTime * zoomSpeed);
+
+        // 3. Fareden aldï¿½ï¿½ï¿½mï¿½z X ve Y aï¿½ï¿½larï¿½nï¿½ bir rotasyona ï¿½evir
         Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
 
-        // 4. Kameranýn pozisyonunu hedefin etrafýnda, ayarladýðýmýz mesafeye göre hesapla
-        Vector3 position = target.position + (Vector3.up * heightOffset) - (rotation * Vector3.forward * distance);
+        // 4. Kameranï¿½n pozisyonunu hedefin etrafï¿½nda, HESAPLANAN YENï¿½ MESAFEYE (currentDistance) gï¿½re bul
+        Vector3 position = target.position + (Vector3.up * heightOffset) - (rotation * Vector3.forward * currentDistance);
 
         // 5. Hesaplanan pozisyon ve rotasyonu kameraya uygula
         transform.rotation = rotation;

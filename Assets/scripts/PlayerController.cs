@@ -5,24 +5,24 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Bileþenler")]
+    [Header("BileÅŸenler")]
     public Transform cameraTransform;
     private Animator animator;
     private CharacterController controller;
 
-    [Header("Hareket Ayarlarý")]
+    [Header("Hareket AyarlarÄ±")]
     public float walkSpeed = 3f;
     public float runSpeed = 6f;
     public float crouchSpeed = 1.5f;
     public float turnSpeed = 15f;
 
-    [Header("Fiziksel Boyut Ayarlarý")]
+    [Header("Fiziksel Boyut AyarlarÄ±")]
     public float normalHeight = 2f;
     public float crouchHeight = 1f;
     public Vector3 normalCenter = new Vector3(0, 1f, 0);
     public Vector3 crouchCenter = new Vector3(0, 0.5f, 0);
 
-    [Header("Zýplama ve Yerçekimi")]
+    [Header("ZÄ±plama ve YerÃ§ekimi")]
     public float jumpHeight = 1.5f;
     public float gravity = -15f;
     public float jumpBufferTime = 0.2f;
@@ -30,6 +30,9 @@ public class PlayerController : MonoBehaviour
 
     private Vector3 velocity;
     private bool isGrounded;
+
+    // YENÄ° EKLENDÄ°: Kamera kodumuz buraya ulaÅŸÄ±p haber verecek
+    [HideInInspector] public bool fpsModundaMi = false; 
 
     void Start()
     {
@@ -40,7 +43,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 1. Yer Kontrolü
+        // 1. Yer KontrolÃ¼
         isGrounded = controller.isGrounded;
         if (isGrounded && velocity.y < 0)
         {
@@ -62,25 +65,14 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.aKey.isPressed) horizontal -= 1f;
             if (Keyboard.current.dKey.isPressed) horizontal += 1f;
 
-            // Sol Ctrl'ye BASILI TUTULDUÐU SÜRECE eðil
-            if (Keyboard.current.leftCtrlKey.isPressed)
-            {
-                isCrouching = true;
-            }
-            // Eðilmiyorsa ve Sol Shift'e basýlýyorsa koþ
-            else if (Keyboard.current.leftShiftKey.isPressed)
-            {
-                isRunning = true;
-            }
+            if (Keyboard.current.leftCtrlKey.isPressed) isCrouching = true;
+            else if (Keyboard.current.leftShiftKey.isPressed) isRunning = true;
 
-            // Zýplama Tamponu
-            if (Keyboard.current.spaceKey.wasPressedThisFrame)
-                jumpBufferCounter = jumpBufferTime;
-            else
-                jumpBufferCounter -= Time.deltaTime;
+            if (Keyboard.current.spaceKey.wasPressedThisFrame) jumpBufferCounter = jumpBufferTime;
+            else jumpBufferCounter -= Time.deltaTime;
         }
 
-        // 3. Zýplama Kontrolü
+        // 3. ZÄ±plama KontrolÃ¼
         if (jumpBufferCounter > 0f && isGrounded && !isCrouching)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -88,7 +80,7 @@ public class PlayerController : MonoBehaviour
             jumpBufferCounter = 0f;
         }
 
-        // 4. Kameraya Göre Hareket Yönü
+        // 4. Kameraya GÃ¶re Hareket YÃ¶nÃ¼
         Vector3 camForward = cameraTransform.forward;
         Vector3 camRight = cameraTransform.right;
         camForward.y = 0; camRight.y = 0;
@@ -96,20 +88,26 @@ public class PlayerController : MonoBehaviour
 
         Vector3 moveDirection = (camForward * vertical + camRight * horizontal).normalized;
 
-        // 5. Hýz Seçimi
+        // 5. HÄ±z SeÃ§imi
         float currentSpeed = walkSpeed;
         if (isCrouching) currentSpeed = crouchSpeed;
         else if (isRunning) currentSpeed = runSpeed;
 
-        // 6. Hareket ve Dönüþ
+        // 6. HAREKET VE DÃ–NÃœÅž (DÃœZENLENDÄ°)
         if (moveDirection.magnitude >= 0.1f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            // EÄžER FPS MODUNDA DEÄžÄ°LSEK (TPS'DEYSEK) GÃ–VDEYÄ° DÃ–NDÃœR
+            if (!fpsModundaMi)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            }
+            
+            // YÃ¼rÃ¼me (Ä°leri gitme veya yan yan kayma) her zaman Ã§alÄ±ÅŸÄ±r
             controller.Move(moveDirection * currentSpeed * Time.deltaTime);
         }
 
-        // 7. Eðilme Fiziði (Collider Küçültme)
+        // 7. EÄŸilme FiziÄŸi
         if (isCrouching)
         {
             controller.height = Mathf.Lerp(controller.height, crouchHeight, Time.deltaTime * 10f);
@@ -121,13 +119,12 @@ public class PlayerController : MonoBehaviour
             controller.center = Vector3.Lerp(controller.center, normalCenter, Time.deltaTime * 10f);
         }
 
-        // 8. Yerçekimini Uygula
+        // 8. YerÃ§ekimini Uygula
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
 
-        // 9. Animator Parametrelerini Gönder
+        // 9. Animator Parametrelerini GÃ¶nder
         animator.SetBool("isCrouching", isCrouching);
-
         float targetSpeedParam = 0f;
         if (moveDirection.magnitude > 0.1f)
         {
