@@ -19,6 +19,9 @@ public class SilahKontrol : MonoBehaviour
     private LineRenderer isinIzleyici;
     private Transform namluUcu;
     private Camera oyuncuKamerasi; 
+    
+    // SES İÇİN EKLENEN DEĞİŞKEN
+    private AudioSource atesSesi; 
 
     public static int hafizaMevcutMermi = -1;
     public static int hafizaToplamMermi = -1;
@@ -27,6 +30,9 @@ public class SilahKontrol : MonoBehaviour
     {
         oyuncuKamerasi = Camera.main; 
         namluUcu = transform.Find("Barrel_Location");
+
+        // OBJENİN ÜZERİNDEKİ SES BİLEŞENİNİ OTOMATİK BULUR
+        atesSesi = GetComponent<AudioSource>(); 
 
         isinIzleyici = GetComponent<LineRenderer>();
         if (isinIzleyici == null) isinIzleyici = gameObject.AddComponent<LineRenderer>();
@@ -66,7 +72,6 @@ public class SilahKontrol : MonoBehaviour
 
     void Update()
     {
-        // KESİN ÇÖZÜM: Silah "silahtutucu" isimli yuvada değilse (yani yerdeyse), Update çalışmaz ve ateş edemez!
         if (transform.parent == null || transform.parent.name != "silahtutucu") return; 
 
         if (Time.timeScale == 0f) return; 
@@ -97,6 +102,9 @@ public class SilahKontrol : MonoBehaviour
     void AtesEt()
     {
         mevcutMermi--;
+        
+        // SESİ ÇALMASI İÇİN EKLENEN KOMUT
+        if (atesSesi != null) atesSesi.Play(); 
         
         Vector3 isinBitisNoktasi = oyuncuKamerasi.transform.position + (oyuncuKamerasi.transform.forward * menzil);
         RaycastHit hit;
